@@ -19,7 +19,47 @@ QFE_SIZE = (128, 128)
 CLAHE_CLIP_LIMIT = 2.0
 CLAHE_TILE_GRID = (8, 8)
 
-st.set_page_config(page_title="HQC-CNN Meat Classifier", page_icon="🥩", layout="centered")
+st.set_page_config(
+    page_title="HQC-CNN Meat Classifier",
+    page_icon="🥩",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Responsive, compact layout. Columns become a vertical stack on narrow screens.
+st.markdown(
+    """
+    <style>
+      #MainMenu, footer, header {visibility: hidden;}
+      .block-container {
+        max-width: 1400px;
+        padding: .8rem 1.2rem 1rem 1.2rem;
+      }
+      h1 {font-size: clamp(1.35rem, 2.4vw, 2rem) !important; margin-bottom: .1rem !important;}
+      h2, h3 {font-size: clamp(1rem, 1.6vw, 1.3rem) !important;}
+      [data-testid="stCaptionContainer"] {margin-bottom: .35rem;}
+      [data-testid="stFileUploader"] {padding: .25rem 0;}
+      [data-testid="stImage"] img {max-height: 38vh; object-fit: contain;}
+      [data-testid="stMetric"] {padding: .45rem .6rem;}
+      div.stButton > button {min-height: 2.7rem; font-weight: 600;}
+      [data-testid="stAlert"] {padding: .55rem .75rem;}
+      @media (max-width: 768px) {
+        .block-container {padding: .45rem .65rem .7rem .65rem;}
+        h1 {font-size: 1.3rem !important;}
+        [data-testid="stImage"] img {max-height: 28vh;}
+        [data-testid="stHorizontalBlock"] {gap: .55rem;}
+        [data-testid="stMetric"] {padding: .3rem .4rem;}
+        div.stButton > button {width: 100%;}
+      }
+      @media (max-height: 720px) and (min-width: 769px) {
+        .block-container {padding-top: .35rem;}
+        [data-testid="stImage"] img {max-height: 30vh;}
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 @st.cache_resource(show_spinner="Memuat model CNN...")
 def load_model():
@@ -27,10 +67,13 @@ def load_model():
         raise FileNotFoundError(f"Model tidak ditemukan: {MODEL_PATH.name}")
     model = tf.keras.models.load_model(str(MODEL_PATH), compile=False)
     if tuple(model.input_shape[1:]) != QFE_SHAPE:
-        raise ValueError(f"Input model adalah {model.input_shape}; seharusnya (None, 64, 64, 6).")
+        raise ValueError(
+            f"Input model adalah {model.input_shape}; seharusnya (None, 64, 64, 6)."
+        )
     if int(model.output_shape[-1]) != len(CLASS_NAMES):
         raise ValueError(f"Output model tidak sesuai: {model.output_shape}")
     return model
+
 
 @st.cache_resource(show_spinner="Memuat rangkaian Quantum Feature Extraction...")
 def load_qfe():
@@ -46,23 +89,16 @@ def load_qfe():
         raise AttributeError("Fungsi qconv() tidak ditemukan pada source QFE.")
     return module
 
-def preprocess_uploaded_image(uploaded_file, apply_clahe=True):
-    """Preprocessing inference dengan pilihan CLAHE.
 
-    Kedua kondisi tetap menjalankan resize 448x448, konversi RGB,
-    resize 128x128, dan normalisasi. Jika apply_clahe=False, tahap CLAHE
-    dilewati karena pengguna menyatakan gambar sudah melalui CLAHE.
-    """
+def preprocess_uploaded_image(uploaded_file, apply_clahe=True):
     raw = np.frombuffer(uploaded_file.getvalue(), dtype=np.uint8)
     bgr = cv2.imdecode(raw, cv2.IMREAD_COLOR)
     if bgr is None:
         raise ValueError("File gambar tidak dapat dibaca.")
 
-    # Proses resize tetap dilakukan pada kedua kondisi.
     resized_bgr = cv2.resize(bgr, RESIZE_SIZE, interpolation=cv2.INTER_AREA)
 
     if apply_clahe:
-        # CLAHE hanya diterapkan pada kanal L di ruang warna LAB.
         lab = cv2.cvtColor(resized_bgr, cv2.COLOR_BGR2LAB)
         l_channel, a_channel, b_channel = cv2.split(lab)
         clahe = cv2.createCLAHE(
@@ -70,24 +106,20 @@ def preprocess_uploaded_image(uploaded_file, apply_clahe=True):
             tileGridSize=CLAHE_TILE_GRID,
         )
         l_clahe = clahe.apply(l_channel)
-
-        # Kanal A dan B dipertahankan; hanya kanal L yang berubah.
         lab_processed = cv2.merge((l_clahe, a_channel, b_channel))
         processed_bgr = cv2.cvtColor(lab_processed, cv2.COLOR_LAB2BGR)
         processing_label = "CLAHE diterapkan pada kanal L"
     else:
-        # Gambar dianggap sudah melalui CLAHE; tidak dilakukan CLAHE ulang.
         processed_bgr = resized_bgr
         processing_label = "CLAHE dilewati (gambar dianggap sudah di-CLAHE)"
 
-    # Tahap setelah CLAHE sama untuk kedua kondisi.
     processed_rgb_448 = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
     rgb_128 = cv2.resize(
         processed_rgb_448, QFE_SIZE, interpolation=cv2.INTER_AREA
     )
     rgb_128 = rgb_128.astype(np.float64) / 255.0
-
     return processed_rgb_448, rgb_128, processing_label
+
 
 def run_prediction(uploaded_file, apply_clahe=True):
     model = load_model()
@@ -95,117 +127,123 @@ def run_prediction(uploaded_file, apply_clahe=True):
     processed_rgb_448, image_128, processing_label = preprocess_uploaded_image(
         uploaded_file, apply_clahe=apply_clahe
     )
-
-    # Gunakan QFE asli; tidak mengubah circuit, bobot C1, atau measurement.
+    # Original PennyLane QFE is retained without changing circuit or C1 weights.
     feature_map = np.asarray(qfe.qconv(image_128, mode=MODE), dtype=np.float32)
     if feature_map.shape != QFE_SHAPE:
         raise ValueError(f"Output QFE {feature_map.shape}, seharusnya {QFE_SHAPE}.")
-
-    probabilities = np.asarray(model.predict(feature_map[None, ...], verbose=0)[0])
+    probabilities = np.asarray(
+        model.predict(feature_map[None, ...], verbose=0)[0]
+    )
     if probabilities.shape != (3,):
         raise ValueError(f"Output prediksi tidak sesuai: {probabilities.shape}")
     index = int(np.argmax(probabilities))
-    return processed_rgb_448, feature_map, probabilities, CLASS_NAMES[index], processing_label
+    return (
+        processed_rgb_448,
+        feature_map,
+        probabilities,
+        CLASS_NAMES[index],
+        processing_label,
+    )
+
+
+# Keep result available across Streamlit reruns and clear it when a new image is selected.
+if "prediction_result" not in st.session_state:
+    st.session_state.prediction_result = None
+if "prediction_image_key" not in st.session_state:
+    st.session_state.prediction_image_key = None
 
 st.title("🥩 HQC-CNN Meat Classification")
-st.caption("Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement")
-st.markdown(
-    "Unggah gambar daging dengan ukuran apa pun. Tentukan apakah CLAHE perlu "
-    "diterapkan atau sudah pernah dilakukan, lalu aplikasi melanjutkan ke QFE "
-    "12-qubit dan klasifikasi CNN."
-)
+st.caption("Hybrid Quantum-Classical CNN · Intra Adaptive Cross (C1)")
 
-with st.expander("Konfigurasi preprocessing penelitian", expanded=False):
-    st.write("Resize: 448 × 448 piksel menggunakan OpenCV INTER_AREA.")
-    st.write("Ruang warna: BGR → LAB.")
-    st.write("Jika checkbox aktif: CLAHE hanya pada kanal L; kanal A dan B tidak dikenai CLAHE. Jika checkbox nonaktif: CLAHE dilewati.")
-    st.write("clipLimit = 2.0; tileGridSize = (8, 8).")
-    st.write("Setelah pemilihan CLAHE: konversi ke RGB, resize 128 × 128, normalisasi [0, 1].")
-    st.write("QFE: mode intra_adaptive_cross, 12 qubit, output 64 × 64 × 6.")
+# Main responsive workspace: side-by-side on desktop, stacked on mobile.
+left, right = st.columns([0.92, 1.35], gap="medium")
 
-uploaded = st.file_uploader(
-    "Unggah gambar daging (JPG, JPEG, atau PNG)",
-    type=["jpg", "jpeg", "png"],
-)
+with left:
+    st.subheader("Input gambar")
+    uploaded = st.file_uploader(
+        "Pilih gambar daging",
+        type=["jpg", "jpeg", "png"],
+        help="Format JPG, JPEG, atau PNG. Ukuran gambar bebas.",
+    )
 
-if uploaded is not None:
-    try:
+    if uploaded is not None:
         uploaded_bytes = uploaded.getvalue()
+        image_key = hashlib.sha256(uploaded_bytes).hexdigest()[:16]
+        if st.session_state.prediction_image_key != image_key:
+            st.session_state.prediction_result = None
+            st.session_state.prediction_image_key = image_key
+
         raw_preview = np.frombuffer(uploaded_bytes, dtype=np.uint8)
         decoded_preview = cv2.imdecode(raw_preview, cv2.IMREAD_COLOR)
         if decoded_preview is None:
-            raise ValueError("File gambar tidak dapat dibaca.")
+            st.error("File gambar tidak dapat dibaca.")
+            st.stop()
+
         original_rgb = cv2.cvtColor(decoded_preview, cv2.COLOR_BGR2RGB)
         st.image(
             original_rgb,
             caption=f"Gambar input · {decoded_preview.shape[1]} × {decoded_preview.shape[0]}",
             use_container_width=True,
         )
-    except Exception as exc:
-        st.error(f"Gagal membaca gambar: {exc}")
-        st.stop()
 
-    # Key berdasarkan isi gambar agar pilihan kembali ke default (aktif)
-    # ketika pengguna mengunggah gambar yang berbeda.
-    image_key = hashlib.sha256(uploaded_bytes).hexdigest()[:16]
-    apply_clahe = st.checkbox(
-        "Gambar belum melalui CLAHE (centang untuk menerapkan CLAHE)",
-        value=True,
-        key=f"apply_clahe_{image_key}",
-        help=(
-            "Biarkan tercentang jika gambar belum di-CLAHE. Hapus centang "
-            "jika gambar sudah di-CLAHE agar CLAHE tidak diterapkan dua kali. "
-            "Status CLAHE dipilih oleh pengguna; aplikasi tidak menebaknya otomatis."
-        ),
-    )
+        apply_clahe = st.checkbox(
+            "Gambar belum melalui CLAHE (terapkan CLAHE)",
+            value=True,
+            key=f"apply_clahe_{image_key}",
+            help=(
+                "Centang jika gambar belum di-CLAHE. Hilangkan centang jika gambar "
+                "sudah di-CLAHE agar CLAHE tidak diterapkan dua kali."
+            ),
+        )
+        if apply_clahe:
+            st.caption("CLAHE aktif: hanya kanal L pada ruang warna LAB yang diproses.")
+            spinner_text = "Resize, CLAHE kanal L, QFE 12-qubit, dan klasifikasi CNN..."
+        else:
+            st.caption("CLAHE nonaktif: tahap CLAHE dilewati.")
+            spinner_text = "Resize, QFE 12-qubit, dan klasifikasi CNN..."
 
-    if apply_clahe:
-        st.info(
-            "Checkbox aktif: gambar dianggap belum melalui CLAHE. Gambar di-resize "
-            "ke 448×448, lalu CLAHE diterapkan hanya pada kanal L (LAB)."
-        )
-        spinner_text = (
-            "Resize 448×448, menerapkan CLAHE pada kanal L, menghitung QFE, "
-            "dan menjalankan CNN. Proses dapat memerlukan waktu..."
-        )
+        if st.button(
+            "🔍 Klasifikasikan gambar",
+            type="primary",
+            use_container_width=True,
+        ):
+            try:
+                with st.spinner(spinner_text):
+                    result = run_prediction(uploaded, apply_clahe=apply_clahe)
+                st.session_state.prediction_result = result
+            except Exception as exc:
+                st.session_state.prediction_result = None
+                st.error(f"Prediksi gagal: {exc}")
+                st.exception(exc)
     else:
-        st.info(
-            "Checkbox nonaktif: gambar dianggap sudah melalui CLAHE. Tahap CLAHE "
-            "akan dilewati; resize, QFE, dan CNN tetap dijalankan."
-        )
-        spinner_text = (
-            "Resize 448×448, melewati CLAHE, menghitung QFE, dan menjalankan CNN. "
-            "Proses dapat memerlukan waktu..."
-        )
+        st.info("Unggah gambar untuk memulai klasifikasi.")
 
-    if st.button("Klasifikasikan gambar", type="primary", use_container_width=True):
-        try:
-            with st.spinner(spinner_text):
-                processed_preview, fmap, probs, predicted, processing_label = run_prediction(
-                    uploaded, apply_clahe=apply_clahe
-                )
-            st.image(
-                processed_preview,
-                caption=f"Citra 448×448 setelah resize · {processing_label}",
-                use_container_width=True,
-            )
-            confidence = float(np.max(probs) * 100.0)
-            st.success(f"Hasil klasifikasi: **{predicted}**")
-            col1, col2 = st.columns(2)
-            col1.metric("Kelas prediksi", predicted)
-            col2.metric("Confidence", f"{confidence:.2f}%")
-            st.subheader("Probabilitas setiap kelas")
-            st.bar_chart({name: [float(probs[i] * 100.0)] for i, name in enumerate(CLASS_NAMES)})
-            st.caption(f"Mode: {MODE} · Bentuk feature map: {fmap.shape}")
-        except Exception as exc:
-            st.error(f"Prediksi gagal: {exc}")
-            st.exception(exc)
+with right:
+    st.subheader("Hasil klasifikasi")
+    result = st.session_state.prediction_result
+    if result is not None:
+        processed_preview, fmap, probs, predicted, processing_label = result
+        st.image(
+            processed_preview,
+            caption=f"Hasil preprocessing · {processing_label}",
+            use_container_width=True,
+        )
+        confidence = float(np.max(probs) * 100.0)
+        st.success(f"Prediksi: **{predicted}**")
+        metric_cols = st.columns(2)
+        metric_cols[0].metric("Kelas", predicted)
+        metric_cols[1].metric("Confidence", f"{confidence:.2f}%")
+        st.markdown("**Probabilitas kelas**")
+        for name, probability in zip(CLASS_NAMES, probs):
+            value = float(probability)
+            st.progress(max(0.0, min(1.0, value)), text=f"{name}: {value * 100:.2f}%")
+        st.caption(f"Mode: {MODE} · Feature map: {fmap.shape}")
+    else:
+        st.info("Hasil prediksi akan muncul di panel ini setelah klasifikasi selesai.")
 
-with st.expander("Informasi pipeline"):
-    st.write("1. Input gambar asli dengan ukuran bebas.")
-    st.write("2. Resize gambar ke 448 × 448 menggunakan INTER_AREA.")
-    st.write("3. Jika checkbox aktif, BGR → LAB lalu CLAHE clipLimit=2.0 dan tileGridSize=(8,8) hanya pada kanal L; kanal A dan B dipertahankan. Jika checkbox nonaktif, CLAHE dilewati.")
-    st.write("4. Konversi ke RGB, resize 128 × 128, dan normalisasi [0,1].")
-    st.write("5. QFE asli menjalankan mode intra_adaptive_cross dengan 12 qubit.")
-    st.write("6. Feature map 64 × 64 × 6 dimasukkan ke model CNN.")
-    st.write("7. CNN menghasilkan probabilitas Beef, Horse_Meat, dan Pork.")
+with st.expander("Detail konfigurasi penelitian"):
+    st.write("Preprocessing: resize 448 × 448, OpenCV INTER_AREA.")
+    st.write("CLAHE: ruang warna LAB, hanya kanal L; clipLimit=2.0; tileGridSize=(8,8).")
+    st.write("Jika checkbox tidak aktif, CLAHE dilewati karena gambar dianggap sudah di-CLAHE.")
+    st.write("QFE: PennyLane default.qubit, 12 qubit, patch 2 × 2, mode intra_adaptive_cross.")
+    st.write("Input CNN: feature map 64 × 64 × 6; kelas: Beef, Horse_Meat, Pork.")
