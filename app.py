@@ -37,6 +37,31 @@ st.markdown(
       }
       h1 {font-size: clamp(1.35rem, 2.4vw, 2rem) !important; margin-bottom: .1rem !important;}
       h2, h3 {font-size: clamp(1rem, 1.6vw, 1.3rem) !important;}
+      .app-hero {
+        width: 100%;
+        text-align: center;
+        margin: 0 auto 1.1rem auto;
+        padding: .35rem .25rem .8rem .25rem;
+      }
+      .app-hero-title {
+        width: 100%;
+        margin: 0 auto;
+        text-align: center;
+        font-size: clamp(1.45rem, 3.1vw, 2.45rem);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: .01em;
+        overflow-wrap: anywhere;
+      }
+      .app-hero-subtitle {
+        width: 100%;
+        margin: .55rem auto 0 auto;
+        text-align: center;
+        color: #8a8f98;
+        font-size: clamp(.78rem, 1.15vw, 1.02rem);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
       [data-testid="stCaptionContainer"] {margin-bottom: .35rem;}
       [data-testid="stFileUploader"] {padding: .25rem 0;}
       [data-testid="stImage"] img {max-height: 38vh; object-fit: contain;}
@@ -46,6 +71,9 @@ st.markdown(
       @media (max-width: 768px) {
         .block-container {padding: .45rem .65rem .7rem .65rem;}
         h1 {font-size: 1.3rem !important;}
+        .app-hero {margin-bottom: .65rem; padding-bottom: .45rem;}
+        .app-hero-title {font-size: clamp(1.25rem, 5.2vw, 1.75rem);}
+        .app-hero-subtitle {font-size: clamp(.72rem, 3.2vw, .9rem); margin-top: .4rem;}
         [data-testid="stImage"] img {max-height: 28vh;}
         [data-testid="stHorizontalBlock"] {gap: .55rem;}
         [data-testid="stMetric"] {padding: .3rem .4rem;}
@@ -152,8 +180,15 @@ if "prediction_result" not in st.session_state:
 if "prediction_image_key" not in st.session_state:
     st.session_state.prediction_image_key = None
 
-st.title("🥩 HQC-CNN Meat Classification")
-st.caption("Hybrid Quantum-Classical CNN · Intra Adaptive Cross (C1)")
+st.markdown(
+    """
+    <div class="app-hero">
+      <div class="app-hero-title">🥩 HQC-CNN Meat Classification</div>
+      <div class="app-hero-subtitle">Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Main responsive workspace: side-by-side on desktop, stacked on mobile.
 left, right = st.columns([0.92, 1.35], gap="medium")
