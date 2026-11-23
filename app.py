@@ -30,58 +30,81 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+      /* Clean, compact page: designed to fit common desktop viewports. */
       #MainMenu, footer, header {visibility: hidden;}
       .block-container {
-        max-width: 1400px;
-        padding: .8rem 1.2rem 1rem 1.2rem;
+        max-width: 1440px;
+        padding: .35rem 1rem .45rem 1rem;
       }
-      h1 {font-size: clamp(1.35rem, 2.4vw, 2rem) !important; margin-bottom: .1rem !important;}
-      h2, h3 {font-size: clamp(1rem, 1.6vw, 1.3rem) !important;}
       .app-hero {
         width: 100%;
         text-align: center;
-        margin: 0 auto 1.1rem auto;
-        padding: .35rem .25rem .8rem .25rem;
+        margin: 0 auto .45rem auto;
+        padding: .1rem .2rem .2rem .2rem;
       }
       .app-hero-title {
         width: 100%;
         margin: 0 auto;
         text-align: center;
-        font-size: clamp(1.45rem, 3.1vw, 2.45rem);
+        font-size: clamp(1.35rem, 2.5vw, 2.05rem);
         font-weight: 800;
-        line-height: 1.2;
-        letter-spacing: .01em;
+        line-height: 1.12;
+        letter-spacing: .005em;
         overflow-wrap: anywhere;
       }
       .app-hero-subtitle {
         width: 100%;
-        margin: .55rem auto 0 auto;
+        margin: .25rem auto 0 auto;
         text-align: center;
         color: #8a8f98;
-        font-size: clamp(.78rem, 1.15vw, 1.02rem);
-        line-height: 1.4;
+        font-size: clamp(.74rem, 1vw, .92rem);
+        line-height: 1.25;
         overflow-wrap: anywhere;
       }
-      [data-testid="stCaptionContainer"] {margin-bottom: .35rem;}
-      [data-testid="stFileUploader"] {padding: .25rem 0;}
-      [data-testid="stImage"] img {max-height: 38vh; object-fit: contain;}
-      [data-testid="stMetric"] {padding: .45rem .6rem;}
-      div.stButton > button {min-height: 2.7rem; font-weight: 600;}
-      [data-testid="stAlert"] {padding: .55rem .75rem;}
-      @media (max-width: 768px) {
-        .block-container {padding: .45rem .65rem .7rem .65rem;}
-        h1 {font-size: 1.3rem !important;}
-        .app-hero {margin-bottom: .65rem; padding-bottom: .45rem;}
-        .app-hero-title {font-size: clamp(1.25rem, 5.2vw, 1.75rem);}
-        .app-hero-subtitle {font-size: clamp(.72rem, 3.2vw, .9rem); margin-top: .4rem;}
-        [data-testid="stImage"] img {max-height: 28vh;}
-        [data-testid="stHorizontalBlock"] {gap: .55rem;}
-        [data-testid="stMetric"] {padding: .3rem .4rem;}
-        div.stButton > button {width: 100%;}
+      h2, h3 {font-size: 1.12rem !important; margin: .15rem 0 .25rem 0 !important;}
+      [data-testid="stCaptionContainer"] {margin: .05rem 0 .15rem 0;}
+      [data-testid="stFileUploader"] {padding: 0 !important; margin: 0 0 .15rem 0 !important;}
+      [data-testid="stFileUploaderDropzone"] {padding: .35rem .55rem !important; min-height: unset !important;}
+      [data-testid="stFileUploaderDropzoneInstructions"] svg {width: 28px !important; height: 28px !important;}
+      [data-testid="stImage"] {margin: .05rem 0 .15rem 0;}
+      [data-testid="stImage"] img {
+        display: block;
+        max-height: 150px !important;
+        max-width: 100% !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
-      @media (max-height: 720px) and (min-width: 769px) {
-        .block-container {padding-top: .35rem;}
-        [data-testid="stImage"] img {max-height: 30vh;}
+      [data-testid="stCheckbox"] {margin: .05rem 0 .05rem 0;}
+      [data-testid="stCheckbox"] label {font-size: .9rem !important;}
+      [data-testid="stAlert"] {padding: .3rem .55rem !important; margin: .15rem 0 !important;}
+      [data-testid="stMetric"] {padding: .25rem .4rem !important;}
+      [data-testid="stProgress"] {margin: .05rem 0 .18rem 0;}
+      div.stButton > button {min-height: 2.25rem; padding: .35rem .7rem; font-weight: 650;}
+      [data-testid="stHorizontalBlock"] {gap: .8rem; align-items: flex-start;}
+      [data-testid="stExpander"] {margin-top: .25rem;}
+      [data-testid="stExpander"] details summary {padding-top: .25rem; padding-bottom: .25rem;}
+      /* Short desktop/laptop windows get a more compact preview. */
+      @media (max-height: 800px) and (min-width: 769px) {
+        .block-container {padding-top: .2rem; padding-bottom: .25rem;}
+        .app-hero {margin-bottom: .25rem; padding-bottom: .05rem;}
+        .app-hero-subtitle {margin-top: .15rem;}
+        [data-testid="stImage"] img {max-height: 125px !important;}
+        [data-testid="stFileUploaderDropzone"] {padding: .25rem .45rem !important;}
+        [data-testid="stAlert"] {padding: .2rem .45rem !important;}
+      }
+      /* Phones: smaller preview and tighter spacing. The panels stack naturally. */
+      @media (max-width: 768px) {
+        .block-container {padding: .25rem .55rem .35rem .55rem;}
+        .app-hero {margin-bottom: .3rem; padding-bottom: .1rem;}
+        .app-hero-title {font-size: clamp(1.18rem, 5.2vw, 1.55rem); line-height: 1.12;}
+        .app-hero-subtitle {font-size: .72rem; margin-top: .15rem; line-height: 1.2;}
+        h2, h3 {font-size: 1rem !important; margin: .1rem 0 .18rem 0 !important;}
+        [data-testid="stImage"] img {max-height: 105px !important;}
+        [data-testid="stFileUploaderDropzone"] {padding: .25rem .4rem !important;}
+        [data-testid="stFileUploaderDropzoneInstructions"] svg {width: 22px !important; height: 22px !important;}
+        [data-testid="stCheckbox"] label {font-size: .82rem !important;}
+        [data-testid="stHorizontalBlock"] {gap: .45rem;}
+        div.stButton > button {width: 100%; min-height: 2.15rem;}
       }
     </style>
     """,
@@ -274,7 +297,7 @@ with right:
             st.progress(max(0.0, min(1.0, value)), text=f"{name}: {value * 100:.2f}%")
         st.caption(f"Mode: {MODE} · Feature map: {fmap.shape}")
     else:
-        st.info("Hasil prediksi akan muncul di panel ini setelah klasifikasi selesai.")
+        st.caption("Hasil akan tampil di sini setelah proses klasifikasi selesai.")
 
 with st.expander("Detail konfigurasi penelitian"):
     st.write("Preprocessing: resize 448 × 448, OpenCV INTER_AREA.")
