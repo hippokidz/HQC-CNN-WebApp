@@ -108,7 +108,7 @@ def run_prediction(uploaded_file, apply_clahe=True):
     return processed_rgb_448, feature_map, probabilities, CLASS_NAMES[index], processing_label
 
 st.title("🥩 HQC-CNN Meat Classification")
-st.caption("Hybrid Quantum-Classical CNN · Intra Adaptive Cross (C1)")
+st.caption("Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement")
 st.markdown(
     "Unggah gambar daging dengan ukuran apa pun. Tentukan apakah CLAHE perlu "
     "diterapkan atau sudah pernah dilakukan, lalu aplikasi melanjutkan ke QFE "
