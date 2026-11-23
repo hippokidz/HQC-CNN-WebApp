@@ -139,7 +139,7 @@ if uploaded is not None:
         st.image(
             original_rgb,
             caption=f"Gambar input · {decoded_preview.shape[1]} × {decoded_preview.shape[0]}",
-            use_column_width=True,
+            use_container_width=True,
         )
     except Exception as exc:
         st.error(f"Gagal membaca gambar: {exc}")
@@ -187,7 +187,7 @@ if uploaded is not None:
             st.image(
                 processed_preview,
                 caption=f"Citra 448×448 setelah resize · {processing_label}",
-                use_column_width=True,
+                use_container_width=True,
             )
             confidence = float(np.max(probs) * 100.0)
             st.success(f"Hasil klasifikasi: **{predicted}**")
