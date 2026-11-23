@@ -39,20 +39,46 @@ st.markdown(
         padding-right: clamp(.65rem, 2vw, 1.6rem);
         overflow: visible !important;
       }
-      /* Use Streamlit's native H1 element for the main title.
-         This avoids clipping that can occur with a tightly-sized HTML title wrapper. */
-      .stApp h1 {
-        display: block !important;
+      /* Header uses div/span, not Streamlit's H1 widget.
+         No fixed height, clipping, negative margin, or hidden overflow. */
+      .hqc-header {
         width: 100%;
+        min-height: 76px;
+        height: auto;
         box-sizing: border-box;
-        text-align: center !important;
-        font-size: clamp(1.4rem, 2.6vw, 2.15rem) !important;
-        font-weight: 800 !important;
-        line-height: 1.38 !important;
-        padding: .16em .12em .20em !important;
-        margin: 0 auto .08rem auto !important;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 12px 10px 8px;
+        margin: 0 auto;
         overflow: visible !important;
-        overflow-wrap: anywhere;
+        text-align: center;
+      }
+      .hqc-header-icon {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.65rem, 2.8vw, 2.25rem);
+        line-height: 1.25;
+        padding: 2px 0;
+        overflow: visible;
+      }
+      .hqc-header-title {
+        display: inline-block;
+        min-width: 0;
+        max-width: 100%;
+        color: #31333f;
+        font-size: clamp(1.4rem, 2.6vw, 2.15rem);
+        font-weight: 800;
+        line-height: 1.28;
+        padding: 3px 0 5px;
+        margin: 0;
+        overflow: visible;
+        overflow-wrap: normal;
+        word-break: normal;
       }
       .hqc-subtitle {
         display: block;
@@ -61,10 +87,10 @@ st.markdown(
         color: #888d98;
         text-align: center;
         font-size: clamp(.75rem, 1.1vw, .95rem);
-        line-height: 1.4;
-        padding: .05rem .15rem .25rem;
+        line-height: 1.45;
+        padding: 2px 8px 5px;
         margin: 0 auto .45rem auto;
-        overflow: visible;
+        overflow: visible !important;
       }
       [data-testid="stMarkdownContainer"] {overflow: visible !important;}
       h2, h3 {margin-top: .2rem !important; margin-bottom: .35rem !important;}
@@ -84,12 +110,26 @@ st.markdown(
       [data-testid="stHorizontalBlock"] {gap: clamp(.6rem, 1.4vw, 1.2rem); align-items: flex-start;}
       @media (max-width: 768px) {
         .block-container {padding-top: .8rem !important; padding-bottom: .4rem;}
-        .stApp h1 {
-          font-size: clamp(1.15rem, 5vw, 1.55rem) !important;
-          line-height: 1.35 !important;
-          padding: .18em .1em .22em !important;
+        .hqc-header {
+          min-height: 64px;
+          gap: 7px;
+          padding: 10px 5px 6px;
         }
-        .hqc-subtitle {font-size: .72rem; line-height: 1.35; margin-bottom: .35rem;}
+        .hqc-header-icon {
+          font-size: clamp(1.25rem, 5vw, 1.65rem);
+          line-height: 1.3;
+        }
+        .hqc-header-title {
+          font-size: clamp(1.05rem, 4.6vw, 1.45rem);
+          line-height: 1.3;
+          padding: 3px 0 5px;
+          overflow-wrap: anywhere;
+        }
+        .hqc-subtitle {
+          font-size: .72rem;
+          line-height: 1.4;
+          margin-bottom: .35rem;
+        }
         h2, h3 {font-size: 1rem !important;}
         [data-testid="stImage"] img {max-height: 115px !important;}
         [data-testid="stFileUploaderDropzone"] {padding: .25rem .4rem !important;}
@@ -97,7 +137,15 @@ st.markdown(
       }
       @media (max-height: 800px) and (min-width: 769px) {
         .block-container {padding-top: .85rem !important; padding-bottom: .3rem;}
-        .stApp h1 {font-size: clamp(1.35rem, 2.3vw, 1.9rem) !important;}
+        .hqc-header {
+          min-height: 68px;
+          padding-top: 10px;
+          padding-bottom: 6px;
+        }
+        .hqc-header-title {
+          font-size: clamp(1.3rem, 2.3vw, 1.9rem);
+          line-height: 1.3;
+        }
         .hqc-subtitle {margin-bottom: .25rem;}
         [data-testid="stImage"] img {max-height: 145px !important;}
         [data-testid="stFileUploaderDropzone"] {padding: .25rem .4rem !important;}
@@ -193,10 +241,18 @@ def run_prediction(uploaded_file, apply_clahe=True):
     index = int(np.argmax(probabilities))
     return processed_rgb_448, feature_map, probabilities, CLASS_NAMES[index], processing_label
 
-# Header: use native Streamlit title so its full line box remains visible.
-st.title("🥩 HQC-CNN Meat Classification")
+# Header rendered as a natural-height HTML flex row.
+# Avoids Streamlit H1's heading wrapper, which was clipped in the deployed layout.
 st.markdown(
-    '<div class="hqc-subtitle">Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement</div>',
+    """
+    <div class="hqc-header">
+      <span class="hqc-header-icon" aria-hidden="true">🥩</span>
+      <span class="hqc-header-title">HQC-CNN Meat Classification</span>
+    </div>
+    <div class="hqc-subtitle">
+      Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
