@@ -33,49 +33,74 @@ st.markdown(
       #MainMenu, footer {visibility: hidden;}
       .block-container {
         max-width: 1500px;
-        padding-top: .55rem;
+        padding-top: 1.15rem !important;
         padding-bottom: .55rem;
         padding-left: clamp(.65rem, 2vw, 1.6rem);
         padding-right: clamp(.65rem, 2vw, 1.6rem);
+        overflow: visible !important;
       }
-      .hqc-header {text-align:center; margin:0 auto .5rem auto;}
-      .hqc-title {
-        font-size:clamp(1.35rem,2.5vw,2.15rem);
-        line-height:1.12; font-weight:800; margin:0;
-        overflow-wrap:anywhere;
+      /* Use Streamlit's native H1 element for the main title.
+         This avoids clipping that can occur with a tightly-sized HTML title wrapper. */
+      .stApp h1 {
+        display: block !important;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center !important;
+        font-size: clamp(1.4rem, 2.6vw, 2.15rem) !important;
+        font-weight: 800 !important;
+        line-height: 1.38 !important;
+        padding: .16em .12em .20em !important;
+        margin: 0 auto .08rem auto !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere;
       }
       .hqc-subtitle {
-        color:#888d98; font-size:clamp(.75rem,1.1vw,.95rem);
-        margin:.2rem 0 0 0; line-height:1.25;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        color: #888d98;
+        text-align: center;
+        font-size: clamp(.75rem, 1.1vw, .95rem);
+        line-height: 1.4;
+        padding: .05rem .15rem .25rem;
+        margin: 0 auto .45rem auto;
+        overflow: visible;
       }
-      h2, h3 {margin-top:.2rem !important; margin-bottom:.35rem !important;}
-      [data-testid="stFileUploader"] {margin-bottom:.15rem;}
-      [data-testid="stFileUploaderDropzone"] {padding:.35rem .55rem !important;}
-      [data-testid="stImage"] {margin:.08rem 0 .15rem 0;}
+      [data-testid="stMarkdownContainer"] {overflow: visible !important;}
+      h2, h3 {margin-top: .2rem !important; margin-bottom: .35rem !important;}
+      [data-testid="stFileUploader"] {margin-bottom: .15rem;}
+      [data-testid="stFileUploaderDropzone"] {padding: .35rem .55rem !important;}
+      [data-testid="stImage"] {margin: .08rem 0 .15rem 0;}
       [data-testid="stImage"] img {
-        max-height:175px !important; width:auto !important;
-        max-width:100% !important; object-fit:contain !important;
+        max-height: 175px !important;
+        width: auto !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
       }
-      [data-testid="stAlert"] {padding:.4rem .65rem !important; margin:.2rem 0 !important;}
-      [data-testid="stMetric"] {padding:.25rem .4rem !important;}
-      [data-testid="stCheckbox"] {margin:.12rem 0 !important;}
-      div.stButton > button {min-height:2.35rem; font-weight:650;}
-      [data-testid="stHorizontalBlock"] {gap:clamp(.6rem,1.4vw,1.2rem); align-items:flex-start;}
+      [data-testid="stAlert"] {padding: .4rem .65rem !important; margin: .2rem 0 !important;}
+      [data-testid="stMetric"] {padding: .25rem .4rem !important;}
+      [data-testid="stCheckbox"] {margin: .12rem 0 !important;}
+      div.stButton > button {min-height: 2.35rem; font-weight: 650;}
+      [data-testid="stHorizontalBlock"] {gap: clamp(.6rem, 1.4vw, 1.2rem); align-items: flex-start;}
       @media (max-width: 768px) {
-        .block-container {padding-top:.35rem; padding-bottom:.4rem;}
-        .hqc-header {margin-bottom:.35rem;}
-        .hqc-title {font-size:clamp(1.15rem,5vw,1.55rem);}
-        .hqc-subtitle {font-size:.72rem;}
-        h2, h3 {font-size:1rem !important;}
-        [data-testid="stImage"] img {max-height:115px !important;}
-        [data-testid="stFileUploaderDropzone"] {padding:.25rem .4rem !important;}
-        div.stButton > button {width:100%;}
+        .block-container {padding-top: .8rem !important; padding-bottom: .4rem;}
+        .stApp h1 {
+          font-size: clamp(1.15rem, 5vw, 1.55rem) !important;
+          line-height: 1.35 !important;
+          padding: .18em .1em .22em !important;
+        }
+        .hqc-subtitle {font-size: .72rem; line-height: 1.35; margin-bottom: .35rem;}
+        h2, h3 {font-size: 1rem !important;}
+        [data-testid="stImage"] img {max-height: 115px !important;}
+        [data-testid="stFileUploaderDropzone"] {padding: .25rem .4rem !important;}
+        div.stButton > button {width: 100%;}
       }
       @media (max-height: 800px) and (min-width: 769px) {
-        .block-container {padding-top:.25rem; padding-bottom:.3rem;}
-        .hqc-header {margin-bottom:.25rem;}
-        [data-testid="stImage"] img {max-height:145px !important;}
-        [data-testid="stFileUploaderDropzone"] {padding:.25rem .4rem !important;}
+        .block-container {padding-top: .85rem !important; padding-bottom: .3rem;}
+        .stApp h1 {font-size: clamp(1.35rem, 2.3vw, 1.9rem) !important;}
+        .hqc-subtitle {margin-bottom: .25rem;}
+        [data-testid="stImage"] img {max-height: 145px !important;}
+        [data-testid="stFileUploaderDropzone"] {padding: .25rem .4rem !important;}
       }
     </style>
     """,
@@ -168,14 +193,10 @@ def run_prediction(uploaded_file, apply_clahe=True):
     index = int(np.argmax(probabilities))
     return processed_rgb_448, feature_map, probabilities, CLASS_NAMES[index], processing_label
 
-# Header and responsive two-panel layout.
+# Header: use native Streamlit title so its full line box remains visible.
+st.title("🥩 HQC-CNN Meat Classification")
 st.markdown(
-    """
-    <div class="hqc-header">
-      <div class="hqc-title">🥩 HQC-CNN Meat Classification</div>
-      <div class="hqc-subtitle">Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement</div>
-    </div>
-    """,
+    '<div class="hqc-subtitle">Hybrid Quantum-Classical CNN With Intra Adaptive Cross Channel Entanglement</div>',
     unsafe_allow_html=True,
 )
 
