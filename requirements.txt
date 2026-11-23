@@ -1,0 +1,13 @@
+# Cloud runtime: pilih Python 3.11 di Streamlit Community Cloud.
+# TF 2.15.1 dipakai karena TensorFlow 2.10.0 tidak menyediakan runtime Python 3.11.
+# Model terlampir adalah file HDF5 Keras 2.10; perlu diuji load/inference di runtime cloud.
+streamlit==1.42.0
+tensorflow-cpu==2.15.1
+numpy==1.23.5
+protobuf==4.25.3
+pennylane==0.32.0
+autoray==0.6.3
+opencv-python-headless==4.8.1.78
+pandas==1.5.3
+psutil==5.9.8
+tqdm==4.66.4
